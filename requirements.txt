@@ -1,14 +1,15 @@
-# Core Deep Learning Frameworks
+# Core Deep Learning Frameworks (GPU-enabled)
 torch>=2.0.0
 torchvision>=0.15.0
+torchaudio>=2.0.0
 
 # YOLO Implementation
 ultralytics>=8.0.0
 
-# ONNX Export and Inference
+# ONNX Export and Inference (GPU-enabled)
 onnx>=1.14.0
 onnxscript>=0.1.0
-onnxruntime>=1.15.0
+onnxruntime-gpu>=1.16.0
 
 # Computer Vision and Image Processing
 opencv-python>=4.8.0
@@ -26,5 +27,7 @@ streamlit>=1.28.0
 # Configuration and Data Handling
 pyyaml>=6.0
 
-# Optional: GPU Acceleration (uncomment if using NVIDIA GPU)
-# onnxruntime-gpu>=1.15.0  # Use instead of onnxruntime for GPU support
+# GPU Acceleration Requirements
+# Note: Requires NVIDIA GPU with CUDA support
+# CUDA 11.8 or 12.x should be installed on your system
+# cuDNN is required for onnxruntime-gpu

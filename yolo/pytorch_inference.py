@@ -47,7 +47,21 @@ class PyTorchYOLOInference:
         with dropout and batch normalization layers disabled.
         """
         self.model_path = Path(model_path)
-        self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
+        
+        # Auto-detect device if not specified
+        if device:
+            self.device = device
+        else:
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
+        # Print GPU information if using CUDA
+        if self.device == 'cuda':
+            gpu_name = torch.cuda.get_device_name(0)
+            gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            print(f"GPU Detected: {gpu_name} ({gpu_memory:.2f} GB)")
+        else:
+            print("Running on CPU (GPU not available)")
+        
         self.model = None
         self.class_names = None
         
@@ -87,11 +101,19 @@ class PyTorchYOLOInference:
             print(f"Loading PyTorch YOLO model from: {self.model_path}")
             self.model = YOLO(str(self.model_path))
         
+        # Move model to the specified device (GPU or CPU)
         self.model.to(self.device)
         
         # Extract class names from the model
         self.class_names = self.model.names
-        print(f"Model loaded successfully on {self.device}")
+        
+        # Confirm device placement
+        if self.device == 'cuda':
+            print(f"Model loaded successfully on GPU ({torch.cuda.get_device_name(0)})")
+            print(f"GPU Memory Allocated: {torch.cuda.memory_allocated(0) / (1024**2):.2f} MB")
+        else:
+            print(f"Model loaded successfully on CPU")
+        
         print(f"Number of classes: {len(self.class_names)}")
         
     def load_image(self, image_path):
@@ -137,11 +159,16 @@ class PyTorchYOLOInference:
         if self.model is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
             
-        print("Running PyTorch inference...")
+        print(f"Running PyTorch inference on {self.device.upper()}...")
         
         # Run inference with the model
         # The model handles preprocessing internally
-        results = self.model(image, verbose=False)
+        results = self.model(image, verbose=False, device=self.device)
+        
+        # Show GPU memory usage if using CUDA
+        if self.device == 'cuda':
+            gpu_memory_used = torch.cuda.memory_allocated(0) / (1024**2)
+            print(f"GPU Memory Used: {gpu_memory_used:.2f} MB")
         
         print(f"Inference complete. Detections found: {len(results[0].boxes)}")
         return results

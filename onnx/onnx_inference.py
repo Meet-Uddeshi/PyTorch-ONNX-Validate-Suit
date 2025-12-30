@@ -143,7 +143,12 @@ class ONNXYOLOInference:
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         
         # Set execution providers (GPU if available, otherwise CPU)
+        # CUDAExecutionProvider will be used if onnxruntime-gpu is installed and CUDA is available
         providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        
+        # Check available providers
+        available_providers = ort.get_available_providers()
+        print(f"Available execution providers: {available_providers}")
         
         self.session = ort.InferenceSession(
             str(self.model_path),
@@ -159,8 +164,18 @@ class ONNXYOLOInference:
         # Get input shape
         self.input_shape = self.session.get_inputs()[0].shape
         
+        # Check which provider is actually being used
+        active_provider = self.session.get_providers()[0]
+        
         print(f"Model loaded successfully")
-        print(f"Execution provider: {self.session.get_providers()[0]}")
+        print(f"Active execution provider: {active_provider}")
+        
+        if active_provider == 'CUDAExecutionProvider':
+            print("GPU acceleration is ENABLED")
+        elif active_provider == 'CPUExecutionProvider':
+            print("WARNING: Running on CPU (GPU not available)")
+            print("For GPU support, install: pip uninstall onnxruntime && pip install onnxruntime-gpu")
+        
         print(f"Input name: {self.input_name}")
         print(f"Input shape: {self.input_shape}")
         print(f"Output names: {self.output_names}")
@@ -308,7 +323,12 @@ class ONNXYOLOInference:
         if self.session is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
             
-        print("Running ONNX inference...")
+        # Check which device is being used
+        device_type = self.session.get_providers()[0]
+        if device_type == 'CUDAExecutionProvider':
+            print("Running ONNX inference on GPU...")
+        else:
+            print("Running ONNX inference on CPU...")
         
         # Run inference
         # ONNX Runtime expects a dictionary mapping input names to tensors
